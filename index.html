@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Datei-Portal Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .error-box { background: #fee2e2; color: #b91c1c; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #f87171; }
+        .file-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        .btn { background: #2563eb; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; font-size: 14px; }
+        #debug { font-family: monospace; font-size: 12px; color: #666; margin-top: 20px; white-space: pre-wrap; background: #eee; padding: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Datei-Portal</h1>
+    <div id="status">Lade Daten...</div>
+    <div id="fileList"></div>
+    <div id="debug">Debug-Log: Warte auf Start...</div>
+</div>
+
+<script>
+    const log = (msg) => { document.getElementById('debug').innerText += "\n" + msg; };
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEfBIQh1VyQYGpdgXFleMLqwiyjl7qkH80FKNtml7m1gDeB8hoIVnMKNQr7sxonuHrQeprks3Tott6/pub?gid=0&single=true&output=csv';
+
+    async function start() {
+        log("Versuche CSV zu laden...");
+        try {
+            const response = await fetch(csvUrl);
+            if (!response.ok) throw new Error("Google antwortet nicht: " + response.status);
+            
+            const text = await response.text();
+            log("Daten empfangen. Länge: " + text.length + " Zeichen.");
+
+            const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
+            log("Anzahl Zeilen gefunden: " + rows.length);
+
+            if (rows.length < 2) {
+                document.getElementById('status').innerHTML = "<div class='error-box'>Das Google Sheet scheint leer zu sein oder wurde nicht korrekt als CSV veröffentlicht.</div>";
+                return;
+            }
+
+            const files = rows.slice(1).map(row => {
+                const parts = row.split(/,|;/); // Trennung per Komma ODER Semikolon
+                return {
+                    index: parts[0] ? parts[0].replace(/"/g, '') : '',
+                    name: parts[1] ? parts[1].replace(/"/g, '') : 'Kein Name',
+                    link: parts[2] ? parts[2].replace(/"/g, '') : '#'
+                };
+            });
+
+            document.getElementById('status').innerHTML = "<b>" + files.length + " Dateien geladen:</b>";
+            document.getElementById('fileList').innerHTML = files.map(f => `
+                <div class="file-item">
+                    <span><strong>${f.index}</strong> - ${f.name}</span>
+                    <a href="${f.link}" class="btn" target="_blank">Öffnen</a>
+                </div>
+            `).join('');
+
+        } catch (err) {
+            log("FEHLER: " + err.message);
+            document.getElementById('status').innerHTML = `
+                <div class="error-box">
+                    <strong>Ladefehler!</strong><br>
+                    Wahrscheinlich blockiert der Browser den Zugriff, weil die Datei lokal auf deinem PC liegt.<br><br>
+                    <em>Lösung: Lade diese Datei bei <strong>tiiny.host</strong> hoch, dann geht es sofort.</em>
+                </div>`;
+        }
+    }
+
+    start();
+</script>
+</body>
+</html>
