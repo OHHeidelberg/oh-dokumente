@@ -2,21 +2,32 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Datei-Portal</title>
     <style>
         body { font-family: sans-serif; background: #f8fafc; padding: 20px; }
         .container { max-width: 900px; margin: auto; }
-        .file-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-        .badge { background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+        header { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        nav a { background: #334155; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        nav a { background: #334155; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; }
+        nav a:hover { background: #475569; }
         nav a.active { background: #2563eb; }
+        .file-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .badge { background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <nav id="categoryMenu"><a onclick="renderTable('all')" class="active">Alle</a></nav>
+    <header>
+        <h1>Datei-Portal</h1>
+        <input type="text" id="searchInput" placeholder="Suchen..." onkeyup="handleSearch()" style="width:100%; padding:10px; box-sizing:border-box;">
+    </header>
+
+    <nav id="categoryMenu">
+        <a onclick="renderTable('all')" class="active">Alle</a>
+    </nav>
+
     <div id="fileList">Lade Datenbank...</div>
 </div>
 
@@ -30,8 +41,8 @@
         const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
         
         allFiles = rows.slice(1).map(row => {
-            // Regex: Splitte bei Komma, aber ignoriere Kommas in Anführungszeichen
-            const c = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+            const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
+            const c = row.split(regex).map(v => v.replace(/^"|"$/g, '').trim());
             return { index: c[0], name: c[1], link: c[2], tags: c[3], category: c[4] || 'Allgemein' };
         });
 
@@ -41,6 +52,7 @@
 
     function renderMenu() {
         const menu = document.getElementById('categoryMenu');
+        // Extrahiere alle Kategorien und teile sie bei Kommas auf
         const cats = new Set(allFiles.flatMap(f => f.category.split(',').map(s => s.trim())));
         cats.forEach(cat => {
             const a = document.createElement('a'); a.innerText = cat;
@@ -61,6 +73,12 @@
                 <a href="${f.link}" target="_blank" style="background:#2563eb; color:white; padding:8px 12px; border-radius:4px; text-decoration:none;">Öffnen</a>
             </div>
         `).join('');
+    }
+
+    function handleSearch() {
+        const val = document.getElementById('searchInput').value.toLowerCase();
+        const list = allFiles.filter(f => f.name.toLowerCase().includes(val) || f.tags.toLowerCase().includes(val));
+        renderTable(list);
     }
     init();
 </script>
