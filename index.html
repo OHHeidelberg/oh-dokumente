@@ -21,11 +21,11 @@
 <div class="container">
     <header>
         <h1>Datei-Portal</h1>
-        <input type="text" id="searchInput" placeholder="Suchen..." onkeyup="handleSearch()" style="width:100%; padding:10px; box-sizing:border-box;">
+        <input type="text" id="searchInput" placeholder="Suche nach Name oder Tags..." onkeyup="handleSearch()" style="width:100%; padding:10px; box-sizing:border-box; border: 1px solid #cbd5e1; border-radius: 6px;">
     </header>
 
     <nav id="categoryMenu">
-        <a onclick="renderTable('all')" class="active">Alle</a>
+        <a id="btn-all" onclick="filterByCategory('all')" class="active">Alle</a>
     </nav>
 
     <div id="fileList">Lade Datenbank...</div>
@@ -33,6 +33,7 @@
 
 <script>
     let allFiles = [];
+    let currentCategory = 'all';
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEfBIQh1VyQYGpdgXFleMLqwiyjl7qkH80FKNtml7m1gDeB8hoIVnMKNQr7sxonuHrQeprks3Tott6/pub?gid=0&single=true&output=csv';
 
     async function init() {
@@ -47,38 +48,48 @@
         });
 
         renderMenu();
-        renderTable('all');
+        renderTable(allFiles);
     }
 
     function renderMenu() {
         const menu = document.getElementById('categoryMenu');
-        // Extrahiere alle Kategorien und teile sie bei Kommas auf
         const cats = new Set(allFiles.flatMap(f => f.category.split(',').map(s => s.trim())));
         cats.forEach(cat => {
             const a = document.createElement('a'); a.innerText = cat;
             a.onclick = () => {
                 document.querySelectorAll('nav a').forEach(e => e.classList.remove('active'));
                 a.classList.add('active');
-                renderTable(cat);
+                filterByCategory(cat);
             };
             menu.appendChild(a);
         });
     }
 
-    function renderTable(cat) {
+    function filterByCategory(cat) {
+        currentCategory = cat;
+        document.getElementById('searchInput').value = ''; // Suche zurücksetzen bei Kategoriewechsel
         const list = cat === 'all' ? allFiles : allFiles.filter(f => f.category.split(',').map(s => s.trim()).includes(cat));
-        document.getElementById('fileList').innerHTML = list.map(f => `
-            <div class="file-card">
-                <div><span class="badge">${f.index}</span> <strong>${f.name}</strong><br><small>${f.tags}</small></div>
-                <a href="${f.link}" target="_blank" style="background:#2563eb; color:white; padding:8px 12px; border-radius:4px; text-decoration:none;">Öffnen</a>
-            </div>
-        `).join('');
+        renderTable(list);
     }
 
     function handleSearch() {
         const val = document.getElementById('searchInput').value.toLowerCase();
-        const list = allFiles.filter(f => f.name.toLowerCase().includes(val) || f.tags.toLowerCase().includes(val));
+        // Filtere basierend auf der aktuellen Kategorie UND der Suchanfrage
+        const list = allFiles.filter(f => {
+            const matchesCat = (currentCategory === 'all' || f.category.split(',').map(s => s.trim()).includes(currentCategory));
+            const matchesSearch = (f.name.toLowerCase().includes(val) || f.tags.toLowerCase().includes(val));
+            return matchesCat && matchesSearch;
+        });
         renderTable(list);
+    }
+
+    function renderTable(list) {
+        document.getElementById('fileList').innerHTML = list.map(f => `
+            <div class="file-card">
+                <div><span class="badge">${f.index}</span> <strong>${f.name}</strong><br><small style="color:#64748b">${f.tags}</small></div>
+                <a href="${f.link}" target="_blank" style="background:#2563eb; color:white; padding:8px 12px; border-radius:4px; text-decoration:none;">Öffnen</a>
+            </div>
+        `).join('');
     }
     init();
 </script>
