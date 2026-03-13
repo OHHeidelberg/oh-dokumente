@@ -2,75 +2,140 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Datei-Portal Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datei-Portal</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .error-box { background: #fee2e2; color: #b91c1c; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #f87171; }
-        .file-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
-        .btn { background: #2563eb; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; font-size: 14px; }
-        #debug { font-family: monospace; font-size: 12px; color: #666; margin-top: 20px; white-space: pre-wrap; background: #eee; padding: 10px; }
+        :root { --primary: #2563eb; --bg: #f8fafc; --text: #0f172a; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+        
+        header { 
+            background: white; padding: 1rem 2rem; border-bottom: 1px solid #e2e8f0;
+            position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; z-index: 100;
+        }
+        #searchInput { padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 8px; width: 100%; max-width: 300px; }
+
+        nav { background: #1e293b; padding: 0.75rem; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        nav a { color: #cbd5e1; text-decoration: none; cursor: pointer; padding: 6px 12px; border-radius: 6px; font-size: 14px; transition: 0.2s; }
+        nav a:hover { color: white; background: rgba(255,255,255,0.2); }
+        nav a.active { color: white; background: var(--primary); }
+
+        main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .file-card { 
+            background: white; padding: 1rem; margin-bottom: 0.75rem; 
+            border-radius: 10px; border: 1px solid #e2e8f0;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .file-info { display: flex; align-items: center; gap: 15px; }
+        .index-badge { background: #f1f5f9; color: #64748b; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; min-width: 35px; text-align: center; }
+        .btn-download { background: var(--primary); color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Datei-Portal</h1>
-    <div id="status">Lade Daten...</div>
-    <div id="fileList"></div>
-    <div id="debug">Debug-Log: Warte auf Start...</div>
-</div>
+<header>
+    <div style="font-weight: bold; color: var(--primary);">📁 DATEI-PORTAL</div>
+    <input type="text" id="searchInput" placeholder="Suchen..." onkeyup="handleSearch()">
+</header>
+
+<nav id="categoryMenu">
+    <a id="btn-all" onclick="showCategory('all')" class="active">Alle anzeigen</a>
+</nav>
+
+<main>
+    <h2 id="currentCategoryTitle">Alle Dateien</h2>
+    <div id="fileList">Lade Datenbank...</div>
+</main>
 
 <script>
-    const log = (msg) => { document.getElementById('debug').innerText += "\n" + msg; };
+    let allFiles = [];
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEfBIQh1VyQYGpdgXFleMLqwiyjl7qkH80FKNtml7m1gDeB8hoIVnMKNQr7sxonuHrQeprks3Tott6/pub?gid=0&single=true&output=csv';
 
-    async function start() {
-        log("Versuche CSV zu laden...");
+    async function init() {
         try {
             const response = await fetch(csvUrl);
-            if (!response.ok) throw new Error("Google antwortet nicht: " + response.status);
+            const data = await response.text();
             
-            const text = await response.text();
-            log("Daten empfangen. Länge: " + text.length + " Zeichen.");
-
-            const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
-            log("Anzahl Zeilen gefunden: " + rows.length);
-
-            if (rows.length < 2) {
-                document.getElementById('status').innerHTML = "<div class='error-box'>Das Google Sheet scheint leer zu sein oder wurde nicht korrekt als CSV veröffentlicht.</div>";
-                return;
-            }
-
-            const files = rows.slice(1).map(row => {
-                const parts = row.split(/,|;/); // Trennung per Komma ODER Semikolon
-                return {
-                    index: parts[0] ? parts[0].replace(/"/g, '') : '',
-                    name: parts[1] ? parts[1].replace(/"/g, '') : 'Kein Name',
-                    link: parts[2] ? parts[2].replace(/"/g, '') : '#'
+            // Trennung nach Zeilen, dann nach Komma oder Semikolon
+            const rows = data.split(/\r?\n/).filter(r => r.trim() !== "");
+            const dataRows = rows.slice(1); 
+            
+            allFiles = dataRows.map(row => {
+                const delimiter = row.includes(';') ? ';' : ',';
+                const cols = row.split(delimiter);
+                const clean = (val) => val ? val.replace(/^"|"$/g, '').trim() : '';
+                
+                return { 
+                    index: clean(cols[0]),
+                    name: clean(cols[1]), 
+                    link: clean(cols[2]), 
+                    tags: clean(cols[3]), 
+                    category: clean(cols[4]) || 'Allgemein' 
                 };
             });
 
-            document.getElementById('status').innerHTML = "<b>" + files.length + " Dateien geladen:</b>";
-            document.getElementById('fileList').innerHTML = files.map(f => `
-                <div class="file-item">
-                    <span><strong>${f.index}</strong> - ${f.name}</span>
-                    <a href="${f.link}" class="btn" target="_blank">Öffnen</a>
-                </div>
-            `).join('');
-
-        } catch (err) {
-            log("FEHLER: " + err.message);
-            document.getElementById('status').innerHTML = `
-                <div class="error-box">
-                    <strong>Ladefehler!</strong><br>
-                    Wahrscheinlich blockiert der Browser den Zugriff, weil die Datei lokal auf deinem PC liegt.<br><br>
-                    <em>Lösung: Lade diese Datei bei <strong>tiiny.host</strong> hoch, dann geht es sofort.</em>
-                </div>`;
+            renderMenu();
+            showCategory('all');
+        } catch (error) {
+            document.getElementById('fileList').innerHTML = "Fehler beim Laden. Bitte online testen (z.B. GitHub oder Tiiny.host).";
         }
     }
 
-    start();
+    function renderMenu() {
+        const menu = document.getElementById('categoryMenu');
+        // Extrahiert alle Kategorien, splittet sie bei Kommas (für Mehrfachkategorien)
+        const flatCategories = allFiles.flatMap(f => f.category.split(',').map(s => s.trim()));
+        const uniqueCategories = [...new Set(flatCategories)].filter(c => c !== "" && c !== "Allgemein");
+
+        uniqueCategories.forEach(cat => {
+            const a = document.createElement('a');
+            a.innerText = cat;
+            a.onclick = () => {
+                document.querySelectorAll('nav a').forEach(el => el.classList.remove('active'));
+                a.classList.add('active');
+                showCategory(cat);
+            };
+            menu.appendChild(a);
+        });
+    }
+
+    function showCategory(cat) {
+        document.getElementById('currentCategoryTitle').innerText = cat === 'all' ? 'Alle Dateien' : cat;
+        const filtered = cat === 'all' 
+            ? allFiles 
+            : allFiles.filter(f => f.category.split(',').map(s => s.trim()).includes(cat));
+        renderFiles(filtered);
+    }
+
+    function handleSearch() {
+        const term = document.getElementById('searchInput').value.toLowerCase();
+        if(term.length > 0) {
+            document.getElementById('currentCategoryTitle').innerText = "Suchergebnisse";
+            const results = allFiles.filter(f => 
+                f.name.toLowerCase().includes(term) || f.tags.toLowerCase().includes(term) || f.index.toLowerCase().includes(term)
+            );
+            renderFiles(results);
+        } else {
+            showCategory('all');
+        }
+    }
+
+    function renderFiles(list) {
+        const container = document.getElementById('fileList');
+        container.innerHTML = list.map(f => `
+            <div class="file-card">
+                <div class="file-info">
+                    <div class="index-badge">${f.index}</div>
+                    <div>
+                        <div style="font-weight:600">${f.name}</div>
+                        <div style="font-size:12px; color:gray">${f.tags}</div>
+                    </div>
+                </div>
+                <a href="${f.link}" class="btn-download" target="_blank">Öffnen</a>
+            </div>
+        `).join('');
+    }
+
+    init();
 </script>
 </body>
 </html>
