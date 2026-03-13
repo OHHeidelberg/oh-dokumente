@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OH HD Dokumente und mehr</title>
+    <title>Datei-Portal</title>
     <style>
         body { font-family: sans-serif; background: #f8fafc; padding: 20px; }
         .container { max-width: 900px; margin: auto; }
@@ -11,16 +11,18 @@
         nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         nav a { background: #334155; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; transition: 0.2s; }
         nav a:hover { background: #475569; }
-        nav a.active { background: #2563eb; }
+        nav a.active { background: rgb(56, 170, 52); }
         .file-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
         .badge { background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; font-size: 12px; }
+        .btn-open { background: rgb(56, 170, 52); color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; }
+        .btn-open:hover { background: rgb(45, 136, 42); }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>OH HD Dokumente und mehr</h1>
+        <h1>Datei-Portal</h1>
         <input type="text" id="searchInput" placeholder="Suche (auch Wortteile)..." onkeyup="handleSearch()" style="width:100%; padding:10px; box-sizing:border-box; border: 1px solid #cbd5e1; border-radius: 6px;">
     </header>
 
@@ -71,14 +73,13 @@
 
     function filterByCategory(cat) {
         currentCategory = cat;
-        handleSearch(); // Nutze die Suchfunktion, um beides zu kombinieren
+        handleSearch();
     }
 
     function handleSearch() {
         const val = document.getElementById('searchInput').value.toLowerCase();
         const list = allFiles.filter(f => {
             const matchesCat = (currentCategory === 'all' || f.category.split(',').map(s => s.trim()).includes(currentCategory));
-            // Hier wird nach Wortteilen in Name oder Tags gesucht
             const matchesSearch = (f.name.toLowerCase().includes(val) || f.tags.toLowerCase().includes(val));
             return matchesCat && matchesSearch;
         });
@@ -93,7 +94,7 @@
         document.getElementById('fileList').innerHTML = list.map(f => `
             <div class="file-card">
                 <div><span class="badge">${f.index}</span> <strong>${f.name}</strong><br><small style="color:#64748b">${f.tags}</small></div>
-                <a href="${f.link}" target="_blank" style="background:#2563eb; color:white; padding:8px 12px; border-radius:4px; text-decoration:none;">Öffnen</a>
+                <a href="${f.link}" target="_blank" class="btn-open">Öffnen</a>
             </div>
         `).join('');
     }
@@ -101,4 +102,3 @@
 </script>
 </body>
 </html>
-
