@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Datei-Portal</title>
+    <title>OHHD Dokumentenportal</title>
     <style>
         body { font-family: sans-serif; background: #f8fafc; padding: 20px; }
         .container { max-width: 900px; margin: auto; }
@@ -22,7 +22,7 @@
 
 <div class="container">
     <header>
-        <h1>Datei-Portal</h1>
+        <h1>OHHD Dokumentenportal</h1>
         <input type="text" id="searchInput" placeholder="Suche (auch Wortteile)..." onkeyup="handleSearch()" style="width:100%; padding:10px; box-sizing:border-box; border: 1px solid #cbd5e1; border-radius: 6px;">
     </header>
 
@@ -88,7 +88,7 @@
 
     function renderTable(list) {
         if(list.length === 0) {
-            document.getElementById('fileList').innerHTML = "<p style='text-align:center;'>Keine passenden Dateien gefunden.</p>";
+            document.getElementById('fileList').innerHTML = "<p style='text-align:center;'>Keine passenden Dokumente gefunden.</p>";
             return;
         }
         document.getElementById('fileList').innerHTML = list.map(f => `
