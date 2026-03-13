@@ -9,7 +9,6 @@
         header { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         nav a { background: #334155; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; }
-        nav a:hover { background: #475569; }
         nav a.active { background: #2563eb; }
         .file-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; }
         .badge { background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; }
@@ -19,7 +18,7 @@
 
 <div class="container">
     <header>
-        <h1>Datei-Portal</h1>
+        <h1>Meine Dateisuche</h1>
         <input type="text" id="searchInput" placeholder="Suchen..." onkeyup="handleSearch()" style="width:100%; padding:10px; box-sizing:border-box;">
     </header>
 
@@ -39,13 +38,14 @@
             const response = await fetch(csvUrl);
             const text = await response.text();
             
-            // Korrekter CSV-Parser, der Kommas in Anführungszeichen ignoriert
+            // CSV-Zeilen trennen
             const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
             
             allFiles = rows.slice(1).map(row => {
-                const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
-                const c = row.split(regex).map(v => v.replace(/^"|"$/g, '').trim());
+                // Wir nutzen einen Parser, der Anführungszeichen beachtet
+                const c = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
                 
+                // Hier erzwingen wir die Spaltenzuordnung (Index, Name, Link, Tags, Kategorie)
                 return { 
                     index: c[0] || '', 
                     name: c[1] || '', 
@@ -55,13 +55,7 @@
                 };
             });
 
+            console.log("Eingelesene Daten:", allFiles); // Prüfe hier in F12, ob c[4] die Kategorie enthält!
             renderMenu();
             showCategory('all');
-        } catch (e) {
-            document.getElementById('fileList').innerHTML = "Fehler beim Laden. Bitte online testen.";
-        }
-    }
-
-    function renderMenu() {
-        const menu = document.getElementById('categoryMenu');
-        const cats = new Set(allFiles.flatMap
+        } catch (e
