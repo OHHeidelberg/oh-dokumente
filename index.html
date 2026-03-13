@@ -19,7 +19,7 @@
 
 <div class="container">
     <header>
-        <h1>Meine Dateisuche</h1>
+        <h1>Datei-Portal</h1>
         <input type="text" id="searchInput" placeholder="Suchen..." onkeyup="handleSearch()" style="width:100%; padding:10px; box-sizing:border-box;">
     </header>
 
@@ -38,32 +38,30 @@
         try {
             const response = await fetch(csvUrl);
             const text = await response.text();
+            
+            // Korrekter CSV-Parser, der Kommas in Anführungszeichen ignoriert
             const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
             
             allFiles = rows.slice(1).map(row => {
-                // Versucht Komma, dann Semikolon, dann Tab
-                const d = row.includes(';') ? ';' : (row.includes('\t') ? '\t' : ',');
-                const c = row.split(d).map(v => v.replace(/^"|"$/g, '').trim());
+                const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
+                const c = row.split(regex).map(v => v.replace(/^"|"$/g, '').trim());
                 
-                return { index: c[0], name: c[1], link: c[2], tags: c[3], category: c[4] || 'Allgemein' };
+                return { 
+                    index: c[0] || '', 
+                    name: c[1] || '', 
+                    link: c[2] || '', 
+                    tags: c[3] || '', 
+                    category: c[4] || 'Allgemein' 
+                };
             });
 
             renderMenu();
             showCategory('all');
         } catch (e) {
-            document.getElementById('fileList').innerHTML = "Fehler beim Laden. Bitte online über tiiny.host oder GitHub Pages testen.";
+            document.getElementById('fileList').innerHTML = "Fehler beim Laden. Bitte online testen.";
         }
     }
 
     function renderMenu() {
         const menu = document.getElementById('categoryMenu');
-        const cats = new Set(allFiles.flatMap(f => f.category.split(',').map(s => s.trim())));
-        cats.forEach(cat => {
-            const a = document.createElement('a');
-            a.innerText = cat;
-            a.onclick = () => {
-                document.querySelectorAll('nav a').forEach(el => el.classList.remove('active'));
-                a.classList.add('active');
-                showCategory(cat);
-            };
-            menu.appendChild(a
+        const cats = new Set(allFiles.flatMap
