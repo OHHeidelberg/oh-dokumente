@@ -1,61 +1,33 @@
 <!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <title>Datei-Portal</title>
-    <style>
-        body { font-family: sans-serif; background: #f8fafc; padding: 20px; }
-        .container { max-width: 900px; margin: auto; }
-        header { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        nav a { background: #334155; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; }
-        nav a.active { background: #2563eb; }
-        .file-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; }
-        .badge { background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; }
-    </style>
-</head>
+<html>
+<head><meta charset="UTF-8"></head>
 <body>
+    <div id="status">Starte...</div>
+    <div id="debug"></div>
 
-<div class="container">
-    <header>
-        <h1>Meine Dateisuche</h1>
-        <input type="text" id="searchInput" placeholder="Suchen..." onkeyup="handleSearch()" style="width:100%; padding:10px; box-sizing:border-box;">
-    </header>
+    <script>
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEfBIQh1VyQYGpdgXFleMLqwiyjl7qkH80FKNtml7m1gDeB8hoIVnMKNQr7sxonuHrQeprks3Tott6/pub?gid=0&single=true&output=csv';
 
-    <nav id="categoryMenu">
-        <a onclick="showCategory('all')" class="active">Alle</a>
-    </nav>
-
-    <div id="fileList">Lade Datenbank...</div>
-</div>
-
-<script>
-    let allFiles = [];
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEfBIQh1VyQYGpdgXFleMLqwiyjl7qkH80FKNtml7m1gDeB8hoIVnMKNQr7sxonuHrQeprks3Tott6/pub?gid=0&single=true&output=csv';
-
-    async function init() {
-        try {
-            const response = await fetch(csvUrl);
-            const text = await response.text();
+        async function test() {
+            const status = document.getElementById('status');
+            const debug = document.getElementById('debug');
             
-            // CSV-Zeilen trennen
-            const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
-            
-            allFiles = rows.slice(1).map(row => {
-                // Wir nutzen einen Parser, der Anführungszeichen beachtet
-                const c = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+            try {
+                status.innerText = "Lade Daten...";
+                const response = await fetch(csvUrl);
+                const text = await response.text();
                 
-                // Hier erzwingen wir die Spaltenzuordnung (Index, Name, Link, Tags, Kategorie)
-                return { 
-                    index: c[0] || '', 
-                    name: c[1] || '', 
-                    link: c[2] || '', 
-                    tags: c[3] || '', 
-                    category: c[4] || 'Allgemein' 
-                };
-            });
-
-            console.log("Eingelesene Daten:", allFiles); // Prüfe hier in F12, ob c[4] die Kategorie enthält!
-            renderMenu();
-            showCategory('all');
-        } catch (e
+                debug.innerHTML = "Rohdaten erhalten. Erste 100 Zeichen: <br><pre>" + text.substring(0, 100) + "</pre>";
+                
+                const rows = text.split('\n');
+                status.innerText = "Zeilen gefunden: " + rows.length;
+                
+                debug.innerHTML += "<br>Zeile 2 (Inhalt): " + rows[1];
+            } catch (e) {
+                status.innerText = "Fehler: " + e.message;
+            }
+        }
+        test();
+    </script>
+</body>
+</html>
