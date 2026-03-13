@@ -1,33 +1,68 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Datei-Portal</title>
+    <style>
+        body { font-family: sans-serif; background: #f8fafc; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        .file-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .badge { background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+        nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        nav a { background: #334155; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        nav a.active { background: #2563eb; }
+    </style>
+</head>
 <body>
-    <div id="status">Starte...</div>
-    <div id="debug"></div>
 
-    <script>
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEfBIQh1VyQYGpdgXFleMLqwiyjl7qkH80FKNtml7m1gDeB8hoIVnMKNQr7sxonuHrQeprks3Tott6/pub?gid=0&single=true&output=csv';
+<div class="container">
+    <nav id="categoryMenu"><a onclick="renderTable('all')" class="active">Alle</a></nav>
+    <div id="fileList">Lade Datenbank...</div>
+</div>
 
-        async function test() {
-            const status = document.getElementById('status');
-            const debug = document.getElementById('debug');
-            
-            try {
-                status.innerText = "Lade Daten...";
-                const response = await fetch(csvUrl);
-                const text = await response.text();
-                
-                debug.innerHTML = "Rohdaten erhalten. Erste 100 Zeichen: <br><pre>" + text.substring(0, 100) + "</pre>";
-                
-                const rows = text.split('\n');
-                status.innerText = "Zeilen gefunden: " + rows.length;
-                
-                debug.innerHTML += "<br>Zeile 2 (Inhalt): " + rows[1];
-            } catch (e) {
-                status.innerText = "Fehler: " + e.message;
-            }
-        }
-        test();
-    </script>
+<script>
+    let allFiles = [];
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEfBIQh1VyQYGpdgXFleMLqwiyjl7qkH80FKNtml7m1gDeB8hoIVnMKNQr7sxonuHrQeprks3Tott6/pub?gid=0&single=true&output=csv';
+
+    async function init() {
+        const res = await fetch(csvUrl);
+        const text = await res.text();
+        const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
+        
+        allFiles = rows.slice(1).map(row => {
+            // Regex: Splitte bei Komma, aber ignoriere Kommas in Anführungszeichen
+            const c = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+            return { index: c[0], name: c[1], link: c[2], tags: c[3], category: c[4] || 'Allgemein' };
+        });
+
+        renderMenu();
+        renderTable('all');
+    }
+
+    function renderMenu() {
+        const menu = document.getElementById('categoryMenu');
+        const cats = new Set(allFiles.flatMap(f => f.category.split(',').map(s => s.trim())));
+        cats.forEach(cat => {
+            const a = document.createElement('a'); a.innerText = cat;
+            a.onclick = () => {
+                document.querySelectorAll('nav a').forEach(e => e.classList.remove('active'));
+                a.classList.add('active');
+                renderTable(cat);
+            };
+            menu.appendChild(a);
+        });
+    }
+
+    function renderTable(cat) {
+        const list = cat === 'all' ? allFiles : allFiles.filter(f => f.category.split(',').map(s => s.trim()).includes(cat));
+        document.getElementById('fileList').innerHTML = list.map(f => `
+            <div class="file-card">
+                <div><span class="badge">${f.index}</span> <strong>${f.name}</strong><br><small>${f.tags}</small></div>
+                <a href="${f.link}" target="_blank" style="background:#2563eb; color:white; padding:8px 12px; border-radius:4px; text-decoration:none;">Öffnen</a>
+            </div>
+        `).join('');
+    }
+    init();
+</script>
 </body>
 </html>
