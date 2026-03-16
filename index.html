@@ -8,110 +8,30 @@
         body { font-family: sans-serif; background: #f8fafc; padding: 20px; }
         .container { max-width: 900px; margin: auto; }
         header { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        /* Navigation / Kategorien */
         nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        nav a { background: #334155; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; transition: 0.2s; }
-        nav a:hover { background: #475569; }
-        nav a.active { background: rgb(56, 170, 52); }
+        nav a { 
+            background: rgb(6, 120, 2); 
+            color: white; 
+            padding: 8px 16px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            text-decoration: none; 
+            font-size: 14px; 
+            transition: 0.2s; 
+            border: none;
+        }
+        nav a:hover { background: rgb(56, 170, 52); } /* Helleres Grün beim Drüberfahren */
+        nav a.active { background: rgb(56, 170, 52); font-weight: bold; }
+        
+        /* Karten-Design */
         .file-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
         .badge { background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; font-size: 12px; }
+        
+        /* Öffnen Button */
         .btn-open { background: rgb(56, 170, 52); color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; }
         .btn-open:hover { background: rgb(45, 136, 42); }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <header>
-        <h1>OHHD Dokumentenportal</h1>
-        <input type="text" id="searchInput" placeholder="Suche nach Index, Name, Tags oder Kategorie..." onkeyup="handleSearch()" style="width:100%; padding:10px; box-sizing:border-box; border: 1px solid #cbd5e1; border-radius: 6px;">
-    </header>
-
-    <nav id="categoryMenu">
-        <a id="btn-all" onclick="filterByCategory('all')" class="active">Alle</a>
-    </nav>
-
-    <div id="fileList">Lade Datenbank...</div>
-</div>
-
-<script>
-    let allFiles = [];
-    let currentCategory = 'all';
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEfBIQh1VyQYGpdgXFleMLqwiyjl7qkH80FKNtml7m1gDeB8hoIVnMKNQr7sxonuHrQeprks3Tott6/pub?gid=0&single=true&output=csv';
-
-    async function init() {
-        try {
-            const res = await fetch(csvUrl);
-            const text = await res.text();
-            const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
-            
-            allFiles = rows.slice(1).map(row => {
-                const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
-                const c = row.split(regex).map(v => v.replace(/^"|"$/g, '').trim());
-                return { 
-                    index: c[0] || '', 
-                    name: c[1] || '', 
-                    link: c[2] || '', 
-                    tags: c[3] || '', 
-                    category: c[4] || 'Allgemein' 
-                };
-            });
-            renderMenu();
-            renderTable(allFiles);
-        } catch (e) {
-            document.getElementById('fileList').innerHTML = "Fehler beim Laden der Daten.";
-        }
-    }
-
-    function renderMenu() {
-        const menu = document.getElementById('categoryMenu');
-        const cats = new Set(allFiles.flatMap(f => f.category.split(',').map(s => s.trim())));
-        cats.forEach(cat => {
-            if(!cat) return;
-            const a = document.createElement('a'); a.innerText = cat;
-            a.onclick = () => {
-                document.querySelectorAll('nav a').forEach(e => e.classList.remove('active'));
-                a.classList.add('active');
-                filterByCategory(cat);
-            };
-            menu.appendChild(a);
-        });
-    }
-
-    function filterByCategory(cat) {
-        currentCategory = cat;
-        handleSearch();
-    }
-
-    function handleSearch() {
-        const val = document.getElementById('searchInput').value.toLowerCase();
-        const list = allFiles.filter(f => {
-            const matchesCat = (currentCategory === 'all' || f.category.split(',').map(s => s.trim()).includes(currentCategory));
-            
-            // Suche über alle relevanten Felder: Index, Name, Tags und Kategorie
-            const matchesSearch = (
-                f.index.toLowerCase().includes(val) ||
-                f.name.toLowerCase().includes(val) || 
-                f.tags.toLowerCase().includes(val) ||
-                f.category.toLowerCase().includes(val)
-            );
-            return matchesCat && matchesSearch;
-        });
-        renderTable(list);
-    }
-
-    function renderTable(list) {
-        if(list.length === 0) {
-            document.getElementById('fileList').innerHTML = "<p style='text-align:center;'>Keine passenden Dokumente gefunden.</p>";
-            return;
-        }
-        document.getElementById('fileList').innerHTML = list.map(f => `
-            <div class="file-card">
-                <div><span class="badge">${f.index}</span> <strong>${f.name}</strong><br><small style="color:#64748b">${f.tags}</small></div>
-                <a href="${f.link}" target="_blank" class="btn-open">Öffnen</a>
-            </div>
-        `).join('');
-    }
-    init();
-</script>
-</body>
-</html>
+        
+        /* Suche */
+        #searchInput { width:100%;
