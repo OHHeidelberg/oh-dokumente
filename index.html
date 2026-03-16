@@ -23,7 +23,7 @@
 <div class="container">
     <header>
         <h1>OHHD Dokumentenportal</h1>
-        <input type="text" id="searchInput" placeholder="Suche (auch Wortteile)..." onkeyup="handleSearch()" style="width:100%; padding:10px; box-sizing:border-box; border: 1px solid #cbd5e1; border-radius: 6px;">
+        <input type="text" id="searchInput" placeholder="Suche (Name, Tags oder Kategorie)..." onkeyup="handleSearch()" style="width:100%; padding:10px; box-sizing:border-box; border: 1px solid #cbd5e1; border-radius: 6px;">
     </header>
 
     <nav id="categoryMenu">
@@ -80,7 +80,11 @@
         const val = document.getElementById('searchInput').value.toLowerCase();
         const list = allFiles.filter(f => {
             const matchesCat = (currentCategory === 'all' || f.category.split(',').map(s => s.trim()).includes(currentCategory));
-            const matchesSearch = (f.name.toLowerCase().includes(val) || f.tags.toLowerCase().includes(val));
+            const matchesSearch = (
+                f.name.toLowerCase().includes(val) || 
+                f.tags.toLowerCase().includes(val) ||
+                f.category.toLowerCase().includes(val)
+            );
             return matchesCat && matchesSearch;
         });
         renderTable(list);
