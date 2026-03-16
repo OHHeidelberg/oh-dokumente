@@ -23,7 +23,7 @@
 <div class="container">
     <header>
         <h1>OHHD Dokumentenportal</h1>
-        <input type="text" id="searchInput" placeholder="Suche (Name, Tags oder Kategorie)..." onkeyup="handleSearch()" style="width:100%; padding:10px; box-sizing:border-box; border: 1px solid #cbd5e1; border-radius: 6px;">
+        <input type="text" id="searchInput" placeholder="Suche nach Index, Name, Tags oder Kategorie..." onkeyup="handleSearch()" style="width:100%; padding:10px; box-sizing:border-box; border: 1px solid #cbd5e1; border-radius: 6px;">
     </header>
 
     <nav id="categoryMenu">
@@ -47,7 +47,13 @@
             allFiles = rows.slice(1).map(row => {
                 const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
                 const c = row.split(regex).map(v => v.replace(/^"|"$/g, '').trim());
-                return { index: c[0] || '', name: c[1] || '', link: c[2] || '', tags: c[3] || '', category: c[4] || 'Allgemein' };
+                return { 
+                    index: c[0] || '', 
+                    name: c[1] || '', 
+                    link: c[2] || '', 
+                    tags: c[3] || '', 
+                    category: c[4] || 'Allgemein' 
+                };
             });
             renderMenu();
             renderTable(allFiles);
@@ -80,7 +86,10 @@
         const val = document.getElementById('searchInput').value.toLowerCase();
         const list = allFiles.filter(f => {
             const matchesCat = (currentCategory === 'all' || f.category.split(',').map(s => s.trim()).includes(currentCategory));
+            
+            // Suche über alle relevanten Felder: Index, Name, Tags und Kategorie
             const matchesSearch = (
+                f.index.toLowerCase().includes(val) ||
                 f.name.toLowerCase().includes(val) || 
                 f.tags.toLowerCase().includes(val) ||
                 f.category.toLowerCase().includes(val)
