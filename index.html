@@ -9,43 +9,27 @@
         .container { max-width: 900px; margin: auto; }
         header { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
-        /* Navigation / Kategorien */
         nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         nav a { 
             background: rgb(6, 70, 2); 
-            color: white; 
-            padding: 8px 16px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            text-decoration: none; 
-            font-size: 14px; 
-            transition: 0.2s; 
-            border: none;
+            color: white; padding: 8px 16px; border-radius: 6px; 
+            cursor: pointer; text-decoration: none; font-size: 14px; transition: 0.2s; 
         }
-        nav a:hover { background: rgb(56, 170, 52); } 
-        nav a.active { background: rgb(56, 170, 52); font-weight: bold; }
+        nav a:hover, nav a.active { background: rgb(56, 170, 52); font-weight: bold; }
         
-        /* Karten-Design */
         .file-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .file-info { flex-grow: 1; margin-right: 15px; }
         .badge { background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; font-size: 12px; }
         
-        /* Buttons */
-        .btn-open { background: rgb(56, 170, 52); color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; }
-        .btn-open:hover { background: rgb(45, 136, 42); }
+        /* Button Styling */
+        .button-group { display: flex; gap: 8px; }
+        .btn-open { color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .btn-pdf { background: rgb(56, 170, 52); } /* Grün */
+        .btn-pdf:hover { background: rgb(45, 136, 42); }
+        .btn-edit { background: #2563eb; } /* Blau für bearbeitbare Dateien */
+        .btn-edit:hover { background: #1d4ed8; }
         
-        .btn-support { 
-            display: inline-block;
-            margin-top: 15px;
-            background: #334155; 
-            color: white; 
-            padding: 10px 20px; 
-            border-radius: 6px; 
-            text-decoration: none; 
-            font-weight: bold;
-        }
-        .btn-support:hover { background: #1e293b; }
-        
-        /* Suche */
+        .btn-support { display: inline-block; margin-top: 15px; background: #334155; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; }
         #searchInput { width:100%; padding:10px; box-sizing:border-box; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; }
         .no-results { text-align: center; padding: 40px; background: white; border-radius: 8px; border: 1px dashed #cbd5e1; }
     </style>
@@ -57,11 +41,7 @@
         <h1>OHHD Dokumentenportal</h1>
         <input type="text" id="searchInput" placeholder="Suche nach Index, Name, Tags oder Kategorie..." onkeyup="handleSearch()">
     </header>
-
-    <nav id="categoryMenu">
-        <a id="btn-all" onclick="filterByCategory('all')" class="active">Alle</a>
-    </nav>
-
+    <nav id="categoryMenu"><a id="btn-all" onclick="filterByCategory('all')" class="active">Alle</a></nav>
     <div id="fileList">Lade Datenbank...</div>
 </div>
 
@@ -82,15 +62,16 @@
                 return { 
                     index: c[0] || '', 
                     name: c[1] || '', 
-                    link: c[2] || '', 
-                    tags: c[3] || '', 
-                    category: c[4] || 'Allgemein' 
+                    linkPdf: c[2] || '',   // Link 1 (z.B. PDF)
+                    linkEdit: c[3] || '',  // Link 2 (z.B. Excel)
+                    tags: c[4] || '', 
+                    category: c[5] || 'Allgemein' 
                 };
             });
             renderMenu();
             renderTable(allFiles);
         } catch (e) {
-            document.getElementById('fileList').innerHTML = "Fehler beim Laden der Daten.";
+            document.getElementById('fileList').innerHTML = "Fehler beim Laden.";
         }
     }
 
@@ -109,21 +90,13 @@
         });
     }
 
-    function filterByCategory(cat) {
-        currentCategory = cat;
-        handleSearch();
-    }
+    function filterByCategory(cat) { currentCategory = cat; handleSearch(); }
 
     function handleSearch() {
         const val = document.getElementById('searchInput').value.toLowerCase();
         const list = allFiles.filter(f => {
             const matchesCat = (currentCategory === 'all' || f.category.split(',').map(s => s.trim()).includes(currentCategory));
-            const matchesSearch = (
-                f.index.toLowerCase().includes(val) ||
-                f.name.toLowerCase().includes(val) || 
-                f.tags.toLowerCase().includes(val) ||
-                f.category.toLowerCase().includes(val)
-            );
+            const matchesSearch = (f.index.toLowerCase().includes(val) || f.name.toLowerCase().includes(val) || f.tags.toLowerCase().includes(val) || f.category.toLowerCase().includes(val));
             return matchesCat && matchesSearch;
         });
         renderTable(list);
@@ -134,27 +107,29 @@
         const searchTerm = document.getElementById('searchInput').value;
 
         if(list.length === 0) {
-            // Mail-Inhalt vorbereiten
             const email = "steffen.schwab@lebenshilfe.heidelberg.de";
             const subject = encodeURIComponent("Leeres Suchergebniss QM online");
             const body = encodeURIComponent(`Hallo Steffen,\nmit dem Suchbegriff "${searchTerm}" habe ich leider kein Ergebnis gefunden.\n\nIch habe danach gesucht:\nMein Name: `);
-            const mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
-
-            listContainer.innerHTML = `
-                <div class="no-results">
-                    <p>Keine passenden Dokumente gefunden.</p>
-                    <a href="${mailtoUrl}" class="btn-support">Fehlendes Dokument melden</a>
-                </div>
-            `;
+            listContainer.innerHTML = `<div class="no-results"><p>Keine passenden Dokumente gefunden.</p><a href="mailto:${email}?subject=${subject}&body=${body}" class="btn-support">Fehlendes Dokument melden</a></div>`;
             return;
         }
         
-        listContainer.innerHTML = list.map(f => `
-            <div class="file-card">
-                <div><span class="badge">${f.index}</span> <strong>${f.name}</strong><br><small style="color:#64748b">${f.tags}</small></div>
-                <a href="${f.link}" target="_blank" class="btn-open">Öffnen</a>
-            </div>
-        `).join('');
+        listContainer.innerHTML = list.map(f => {
+            // Buttons nur anzeigen, wenn ein Link existiert
+            let buttons = '';
+            if(f.linkPdf) buttons += `<a href="${f.linkPdf}" target="_blank" class="btn-open btn-pdf">PDF</a>`;
+            if(f.linkEdit) buttons += `<a href="${f.linkEdit}" target="_blank" class="btn-open btn-edit">Excel/Word</a>`;
+
+            return `
+                <div class="file-card">
+                    <div class="file-info">
+                        <span class="badge">${f.index}</span> <strong>${f.name}</strong><br>
+                        <small style="color:#64748b">${f.tags}</small>
+                    </div>
+                    <div class="button-group">${buttons}</div>
+                </div>
+            `;
+        }).join('');
     }
     init();
 </script>
