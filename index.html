@@ -29,12 +29,25 @@
         .file-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
         .badge { background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; font-size: 12px; }
         
-        /* Öffnen Button */
+        /* Buttons */
         .btn-open { background: rgb(56, 170, 52); color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; }
         .btn-open:hover { background: rgb(45, 136, 42); }
         
+        .btn-support { 
+            display: inline-block;
+            margin-top: 15px;
+            background: #334155; 
+            color: white; 
+            padding: 10px 20px; 
+            border-radius: 6px; 
+            text-decoration: none; 
+            font-weight: bold;
+        }
+        .btn-support:hover { background: #1e293b; }
+        
         /* Suche */
         #searchInput { width:100%; padding:10px; box-sizing:border-box; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; }
+        .no-results { text-align: center; padding: 40px; background: white; border-radius: 8px; border: 1px dashed #cbd5e1; }
     </style>
 </head>
 <body>
@@ -118,10 +131,24 @@
 
     function renderTable(list) {
         const listContainer = document.getElementById('fileList');
+        const searchTerm = document.getElementById('searchInput').value;
+
         if(list.length === 0) {
-            listContainer.innerHTML = "<p style='text-align:center;'>Keine passenden Dokumente gefunden.</p>";
+            // Mail-Inhalt vorbereiten
+            const email = "steffen.schwab@lebenshilfe.heidelberg.de";
+            const subject = encodeURIComponent("Leeres Suchergebniss QM online");
+            const body = encodeURIComponent(`Hallo Steffen,\nmit dem Suchbegriff "${searchTerm}" habe ich leider kein Ergebnis gefunden.\n\nIch habe danach gesucht:\nMein Name: `);
+            const mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
+
+            listContainer.innerHTML = `
+                <div class="no-results">
+                    <p>Keine passenden Dokumente gefunden.</p>
+                    <a href="${mailtoUrl}" class="btn-support">Fehlendes Dokument melden</a>
+                </div>
+            `;
             return;
         }
+        
         listContainer.innerHTML = list.map(f => `
             <div class="file-card">
                 <div><span class="badge">${f.index}</span> <strong>${f.name}</strong><br><small style="color:#64748b">${f.tags}</small></div>
