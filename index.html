@@ -23,15 +23,14 @@
         .file-info { flex-grow: 1; margin-right: 15px; }
         .badge { background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; font-size: 12px; }
         
-        /* Button Styling */
         .button-group { display: flex; gap: 8px; }
         .btn-open { color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; white-space: nowrap; min-width: 65px; text-align: center; }
         
-        /* PDF Button - JETZT ROT */
+        /* PDF Button - Rot */
         .btn-pdf { background: #dc2626; } 
         .btn-pdf:hover { background: #b91c1c; }
         
-        /* DOC/XLS Button - BLEIBT BLAU */
+        /* DOC/XLS Button - Blau */
         .btn-edit { background: #2563eb; } 
         .btn-edit:hover { background: #1d4ed8; }
         
@@ -74,6 +73,10 @@
                     category: c[5] || 'Allgemein' 
                 };
             });
+
+            // Alphabetische Sortierung nach dem Namen
+            allFiles.sort((a, b) => a.name.localeCompare(b.name));
+
             renderMenu();
             renderTable(allFiles);
         } catch (e) {
@@ -84,7 +87,10 @@
     function renderMenu() {
         const menu = document.getElementById('categoryMenu');
         const cats = new Set(allFiles.flatMap(f => f.category.split(',').map(s => s.trim())));
-        cats.forEach(cat => {
+        // Auch die Kategorien im Menü alphabetisch sortieren
+        const sortedCats = Array.from(cats).sort();
+        
+        sortedCats.forEach(cat => {
             if(!cat) return;
             const a = document.createElement('a'); a.innerText = cat;
             a.onclick = () => {
