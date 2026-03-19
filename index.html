@@ -14,8 +14,10 @@
             background: rgb(6, 70, 2); 
             color: white; padding: 8px 16px; border-radius: 6px; 
             cursor: pointer; text-decoration: none; font-size: 14px; transition: 0.2s; 
+            border: none;
         }
-        nav a:hover, nav a.active { background: rgb(56, 170, 52); font-weight: bold; }
+        nav a:hover { background: rgb(56, 170, 52); }
+        nav a.active { background: rgb(56, 170, 52); font-weight: bold; }
         
         .file-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
         .file-info { flex-grow: 1; margin-right: 15px; }
@@ -23,10 +25,10 @@
         
         /* Button Styling */
         .button-group { display: flex; gap: 8px; }
-        .btn-open { color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; white-space: nowrap; min-width: 60px; text-align: center; }
-        .btn-pdf { background: rgb(56, 170, 52); } /* Grün */
+        .btn-open { color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; white-space: nowrap; min-width: 65px; text-align: center; }
+        .btn-pdf { background: rgb(56, 170, 52); } 
         .btn-pdf:hover { background: rgb(45, 136, 42); }
-        .btn-edit { background: #2563eb; } /* Blau */
+        .btn-edit { background: #2563eb; } 
         .btn-edit:hover { background: #1d4ed8; }
         
         .btn-support { display: inline-block; margin-top: 15px; background: #334155; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; }
@@ -71,7 +73,7 @@
             renderMenu();
             renderTable(allFiles);
         } catch (e) {
-            document.getElementById('fileList').innerHTML = "Fehler beim Laden.";
+            document.getElementById('fileList').innerHTML = "Fehler beim Laden der Daten.";
         }
     }
 
@@ -96,7 +98,12 @@
         const val = document.getElementById('searchInput').value.toLowerCase();
         const list = allFiles.filter(f => {
             const matchesCat = (currentCategory === 'all' || f.category.split(',').map(s => s.trim()).includes(currentCategory));
-            const matchesSearch = (f.index.toLowerCase().includes(val) || f.name.toLowerCase().includes(val) || f.tags.toLowerCase().includes(val) || f.category.toLowerCase().includes(val));
+            const matchesSearch = (
+                f.index.toLowerCase().includes(val) || 
+                f.name.toLowerCase().includes(val) || 
+                f.tags.toLowerCase().includes(val) || 
+                f.category.toLowerCase().includes(val)
+            );
             return matchesCat && matchesSearch;
         });
         renderTable(list);
@@ -116,13 +123,11 @@
         
         listContainer.innerHTML = list.map(f => {
             let buttons = '';
-            // PDF Button
-            if(f.linkPdf && f.linkPdf.length > 5) {
+            if(f.linkPdf && f.linkPdf.length > 10) {
                 buttons += `<a href="${f.linkPdf}" target="_blank" class="btn-open btn-pdf">PDF</a>`;
             }
-            // XLS/DOK Button
-            if(f.linkEdit && f.linkEdit.length > 5) {
-                buttons += `<a href="${f.linkEdit}" target="_blank" class="btn-open btn-edit">XLS/DOK</a>`;
+            if(f.linkEdit && f.linkEdit.length > 10) {
+                buttons += `<a href="${f.linkEdit}" target="_blank" class="btn-open btn-edit">XLS/DOC</a>`;
             }
 
             return `
