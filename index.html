@@ -23,10 +23,10 @@
         
         /* Button Styling */
         .button-group { display: flex; gap: 8px; }
-        .btn-open { color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .btn-open { color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; white-space: nowrap; min-width: 60px; text-align: center; }
         .btn-pdf { background: rgb(56, 170, 52); } /* Grün */
         .btn-pdf:hover { background: rgb(45, 136, 42); }
-        .btn-edit { background: #2563eb; } /* Blau für bearbeitbare Dateien */
+        .btn-edit { background: #2563eb; } /* Blau */
         .btn-edit:hover { background: #1d4ed8; }
         
         .btn-support { display: inline-block; margin-top: 15px; background: #334155; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; }
@@ -62,8 +62,8 @@
                 return { 
                     index: c[0] || '', 
                     name: c[1] || '', 
-                    linkPdf: c[2] || '',   // Link 1 (z.B. PDF)
-                    linkEdit: c[3] || '',  // Link 2 (z.B. Excel)
+                    linkPdf: c[2] || '',   
+                    linkEdit: c[3] || '',  
                     tags: c[4] || '', 
                     category: c[5] || 'Allgemein' 
                 };
@@ -115,10 +115,15 @@
         }
         
         listContainer.innerHTML = list.map(f => {
-            // Buttons nur anzeigen, wenn ein Link existiert
             let buttons = '';
-            if(f.linkPdf) buttons += `<a href="${f.linkPdf}" target="_blank" class="btn-open btn-pdf">PDF</a>`;
-            if(f.linkEdit) buttons += `<a href="${f.linkEdit}" target="_blank" class="btn-open btn-edit">Excel/Word</a>`;
+            // PDF Button
+            if(f.linkPdf && f.linkPdf.length > 5) {
+                buttons += `<a href="${f.linkPdf}" target="_blank" class="btn-open btn-pdf">PDF</a>`;
+            }
+            // XLS/DOK Button
+            if(f.linkEdit && f.linkEdit.length > 5) {
+                buttons += `<a href="${f.linkEdit}" target="_blank" class="btn-open btn-edit">XLS/DOK</a>`;
+            }
 
             return `
                 <div class="file-card">
