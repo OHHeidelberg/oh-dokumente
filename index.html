@@ -5,8 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OHHD Dokumentenportal</title>
     <style>
-        body { font-family: sans-serif; background: #f8fafc; padding: 20px; }
-        .container { max-width: 900px; margin: auto; }
+        body { font-family: sans-serif; background: #f8fafc; padding: 20px; margin: 0; }
+        .wrapper { display: flex; max-width: 1100px; margin: auto; gap: 20px; }
+        
+        /* A-Z Sidebar */
+        .az-sidebar { 
+            width: 40px; 
+            display: flex; 
+            flex-direction: column; 
+            background: white; 
+            padding: 10px 5px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+        .az-sidebar span { 
+            text-align: center; 
+            font-size: 12px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            padding: 3px 0; 
+            color: rgb(6, 70, 2);
+            transition: 0.2s;
+        }
+        .az-sidebar span:hover { color: rgb(56, 170, 52); transform: scale(1.2); }
+        .az-sidebar span.active { color: white; background: rgb(56, 170, 52); border-radius: 4px; }
+
+        .container { flex-grow: 1; max-width: 900px; }
         header { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
         nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -26,11 +53,8 @@
         .button-group { display: flex; gap: 8px; }
         .btn-open { color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; white-space: nowrap; min-width: 65px; text-align: center; }
         
-        /* PDF Button - Rot */
         .btn-pdf { background: #dc2626; } 
         .btn-pdf:hover { background: #b91c1c; }
-        
-        /* DOC/XLS Button - Blau */
         .btn-edit { background: #2563eb; } 
         .btn-edit:hover { background: #1d4ed8; }
         
@@ -41,18 +65,25 @@
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>OHHD Dokumentenportal</h1>
-        <input type="text" id="searchInput" placeholder="Suche nach Index, Name, Tags oder Kategorie..." onkeyup="handleSearch()">
-    </header>
-    <nav id="categoryMenu"><a id="btn-all" onclick="filterByCategory('all')" class="active">Alle</a></nav>
-    <div id="fileList">Lade Datenbank...</div>
+<div class="wrapper">
+    <div class="az-sidebar" id="azSidebar">
+        <span onclick="filterByLetter('all')" class="active" id="letter-all">#</span>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>OHHD Dokumentenportal</h1>
+            <input type="text" id="searchInput" placeholder="Suche nach Index, Name, Tags oder Kategorie..." onkeyup="handleSearch()">
+        </header>
+        <nav id="categoryMenu"><a id="btn-all" onclick="filterByCategory('all')" class="active">Alle</a></nav>
+        <div id="fileList">Lade Datenbank...</div>
+    </div>
 </div>
 
 <script>
     let allFiles = [];
     let currentCategory = 'all';
+    let currentLetter = 'all';
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEfBIQh1VyQYGpdgXFleMLqwiyjl7qkH80FKNtml7m1gDeB8hoIVnMKNQr7sxonuHrQeprks3Tott6/pub?gid=0&single=true&output=csv';
 
     async function init() {
@@ -74,9 +105,8 @@
                 };
             });
 
-            // Alphabetische Sortierung nach dem Namen
             allFiles.sort((a, b) => a.name.localeCompare(b.name));
-
+            renderAZSidebar();
             renderMenu();
             renderTable(allFiles);
         } catch (e) {
@@ -84,10 +114,28 @@
         }
     }
 
+    function renderAZSidebar() {
+        const sidebar = document.getElementById('azSidebar');
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+        alphabet.forEach(letter => {
+            const span = document.createElement('span');
+            span.innerText = letter;
+            span.id = `letter-${letter}`;
+            span.onclick = () => filterByLetter(letter);
+            sidebar.appendChild(span);
+        });
+    }
+
+    function filterByLetter(letter) {
+        currentLetter = letter;
+        document.querySelectorAll('.az-sidebar span').forEach(s => s.classList.remove('active'));
+        document.getElementById(`letter-${letter}`).classList.add('active');
+        handleSearch();
+    }
+
     function renderMenu() {
         const menu = document.getElementById('categoryMenu');
         const cats = new Set(allFiles.flatMap(f => f.category.split(',').map(s => s.trim())));
-        // Auch die Kategorien im Menü alphabetisch sortieren
         const sortedCats = Array.from(cats).sort();
         
         sortedCats.forEach(cat => {
@@ -108,13 +156,14 @@
         const val = document.getElementById('searchInput').value.toLowerCase();
         const list = allFiles.filter(f => {
             const matchesCat = (currentCategory === 'all' || f.category.split(',').map(s => s.trim()).includes(currentCategory));
+            const matchesLetter = (currentLetter === 'all' || f.name.trim().toUpperCase().startsWith(currentLetter));
             const matchesSearch = (
                 f.index.toLowerCase().includes(val) || 
                 f.name.toLowerCase().includes(val) || 
                 f.tags.toLowerCase().includes(val) || 
                 f.category.toLowerCase().includes(val)
             );
-            return matchesCat && matchesSearch;
+            return matchesCat && matchesLetter && matchesSearch;
         });
         renderTable(list);
     }
@@ -126,7 +175,7 @@
         if(list.length === 0) {
             const email = "steffen.schwab@lebenshilfe.heidelberg.de";
             const subject = encodeURIComponent("Leeres Suchergebniss QM online");
-            const body = encodeURIComponent(`Hallo Steffen,\nmit dem Suchbegriff "${searchTerm}" habe ich leider kein Ergebnis gefunden.\n\nIch habe danach gesucht:\nMein Name: `);
+            const body = encodeURIComponent(`Hallo Steffen,\nmit dem Suchbegriff "${searchTerm}" (Filter: ${currentLetter}) habe ich leider kein Ergebnis gefunden.\n\nIch habe danach gesucht:\nMein Name: `);
             listContainer.innerHTML = `<div class="no-results"><p>Keine passenden Dokumente gefunden.</p><a href="mailto:${email}?subject=${subject}&body=${body}" class="btn-support">Fehlendes Dokument melden</a></div>`;
             return;
         }
