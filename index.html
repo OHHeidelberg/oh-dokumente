@@ -9,27 +9,29 @@
         .wrapper { display: flex; max-width: 1200px; margin: auto; gap: 20px; flex-direction: row; align-items: flex-start; }
         
         .az-sidebar { 
-            width: 55px; display: flex; flex-direction: column; justify-content: space-between; 
+            width: 60px; display: flex; flex-direction: column; justify-content: space-between; 
             background: white; padding: 15px 5px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             position: sticky; top: 20px; height: calc(100vh - 70px); z-index: 10; box-sizing: border-box;
         }
+        
         .az-sidebar span { 
             text-align: center; font-size: clamp(10px, 1.4vh, 13px); font-weight: bold; cursor: pointer; 
             color: rgb(6, 70, 2); transition: 0.2s; display: flex; align-items: center; justify-content: center; flex-grow: 1; text-transform: uppercase;
         }
-        #letter-all { font-size: 10px; line-height: 1; margin-bottom: 5px; }
+        
+        #letter-all { font-size: 11px; line-height: 1; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
 
         @media (max-width: 768px) {
             .wrapper { flex-direction: column; }
             .az-sidebar { width: 100%; height: auto; flex-direction: row; justify-content: flex-start; overflow-x: auto; position: relative; top: 0; padding: 10px; gap: 15px; }
-            .az-sidebar span { padding: 5px 10px; min-width: 40px; flex-grow: 0; }
+            .az-sidebar span { padding: 5px 10px; min-width: 45px; flex-grow: 0; }
         }
 
         .az-sidebar span:hover { color: rgb(56, 170, 52); transform: scale(1.2); }
         .az-sidebar span.active { color: white; background: rgb(56, 170, 52); border-radius: 4px; }
 
         .container { flex-grow: 1; min-width: 0; } 
-        header { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        header { background: white; padding: 20px; border-radius: 88px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; padding: 20px; text-align: center; }
         
         nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         nav a { background: rgb(6, 70, 2); color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; transition: 0.2s; }
@@ -40,7 +42,7 @@
         .badge { background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; font-size: 12px; }
         
         .button-group { display: flex; gap: 8px; flex-shrink: 0; }
-        .btn-open { color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; white-space: nowrap; min-width: 65px; text-align: center; }
+        .btn-open { color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; white-space: nowrap; min-width: 70px; text-align: center; }
         
         .btn-pdf { background: #dc2626; } 
         .btn-pdf:hover { background: #b91c1c; }
@@ -64,8 +66,12 @@
             <h1>OHHD Dokumentenportal</h1>
             <input type="text" id="searchInput" placeholder="Suche..." onkeyup="handleSearch()">
         </header>
-        <nav id="categoryMenu" style="display: none;"><a id="btn-all" onclick="filterByCategory('all')" class="active">Alle</a></nav>
-        <div id="fileList">Prüfe Zugriff...</div>
+
+        <nav id="categoryMenu" style="display: none;">
+            <a id="btn-all" onclick="filterByCategory('all')" class="active">Alle Dokumente</a>
+        </nav>
+
+        <div id="fileList">Prüfe Zugriffsberechtigung...</div>
     </div>
 </div>
 
@@ -74,56 +80,66 @@
     let currentCategory = 'all';
     let currentLetter = 'all';
 
-    // KRYPTISCHE MAPPINGS (Hier anpassen)
+    // KRYPTISCHE MAPPINGS (Intern klein geschrieben für Case-Insensitivity)
     const categoryMap = {
-        "xEAX": "Ehrenamt",
-                "admin99": "all" // Ein Code, um doch alles zu sehen
+        "xeax": "Ehrenamt",
+        "admin99": "all"
     };
 
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEfBIQh1VyQYGpdgXFleMLqwiyjl7qkH80FKNtml7m1gDeB8hoIVnMKNQr7sxonuHrQeprks3Tott6/pub?gid=0&single=true&output=csv';
 
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
-        const idParam = urlParams.get('id');
+        let idRaw = urlParams.get('id');
+        
+        // Eingabe in Kleinbuchstaben umwandeln für den Vergleich
+        const idParam = idRaw ? idRaw.toLowerCase() : null;
 
-        // Prüfung: Ist die ID gültig?
         if (!idParam || !categoryMap[idParam]) {
             document.getElementById('fileList').innerHTML = `
                 <div class="no-results">
-                    <h2>Zugriff verweigert</h2>
-                    <p>Bitte nutzen Sie einen gültigen Abteilungs-Link oder wenden Sie sich an den Administrator.</p>
+                    <h2 style="color: #dc2626;">Zugriff verweigert</h2>
+                    <p>Kein gültiger Zugriffscode gefunden.</p>
                 </div>`;
             return;
         }
 
-        // Falls gültig, UI einblenden und Kategorie setzen
         currentCategory = categoryMap[idParam];
         document.getElementById('mainHeader').style.display = 'block';
         
-        // Wenn nicht "admin99", dann Menüs verstecken für isolierte Ansicht
-        if (idParam !== "admin99") {
-            document.getElementById('categoryMenu').style.display = 'none';
-            document.getElementById('azSidebar').style.display = 'none';
-        } else {
+        if (idParam === "admin99") {
             document.getElementById('categoryMenu').style.display = 'flex';
             document.getElementById('azSidebar').style.display = 'flex';
+        } else {
+            document.getElementById('categoryMenu').style.display = 'none';
+            document.getElementById('azSidebar').style.display = 'none';
         }
 
         try {
             const res = await fetch(csvUrl);
             const text = await res.text();
             const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
+            
             allFiles = rows.slice(1).map(row => {
                 const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
                 const c = row.split(regex).map(v => v.replace(/^"|"$/g, '').trim());
-                return { index: c[0], name: c[1], linkPdf: c[2], linkEdit: c[3], tags: c[4], category: c[5] || 'Allgemein' };
+                return { 
+                    index: c[0] || '', 
+                    name: c[1] || '', 
+                    linkPdf: c[2] || '', 
+                    linkEdit: c[3] || '', 
+                    tags: c[4] || '', 
+                    category: c[5] || 'Allgemein' 
+                };
             });
+
             allFiles.sort((a, b) => a.name.localeCompare(b.name));
-            
             renderAZSidebar();
             renderMenu();
             handleSearch();
-        } catch (e) { document.getElementById('fileList').innerHTML = "Fehler beim Laden der Datenbank."; }
+        } catch (e) { 
+            document.getElementById('fileList').innerHTML = "Fehler beim Laden der Datenbank."; 
+        }
     }
 
     function renderAZSidebar() {
@@ -165,7 +181,11 @@
         const list = allFiles.filter(f => {
             const matchesCat = (currentCategory === 'all' || f.category.split(',').map(s => s.trim()).includes(currentCategory));
             const matchesLetter = (currentLetter === 'all' || f.name.trim().toUpperCase().startsWith(currentLetter));
-            const matchesSearch = (f.index.toLowerCase().includes(val) || f.name.toLowerCase().includes(val) || f.tags.toLowerCase().includes(val));
+            const matchesSearch = (
+                f.index.toLowerCase().includes(val) || 
+                f.name.toLowerCase().includes(val) || 
+                f.tags.toLowerCase().includes(val)
+            );
             return matchesCat && matchesLetter && matchesSearch;
         });
         renderTable(list);
@@ -175,19 +195,21 @@
         const listContainer = document.getElementById('fileList');
         if(list.length === 0) {
             const email = "steffen.schwab@lebenshilfe.heidelberg.de";
-            listContainer.innerHTML = `<div class="no-results"><p>Keine passenden Dokumente gefunden.</p><a href="mailto:${email}" class="btn-support">Support kontaktieren</a></div>`;
+            listContainer.innerHTML = `<div class="no-results"><p>Keine Treffer.</p><a href="mailto:${email}" class="btn-support">Support</a></div>`;
             return;
         }
         listContainer.innerHTML = list.map(f => `
             <div class="file-card">
-                <div class="file-info"><span class="badge">${f.index}</span><strong>${f.name}</strong><br><small>${f.tags}</small></div>
+                <div class="file-info"><span class="badge">${f.index}</span><strong>${f.name}</strong><br><small style="color: #64748b;">${f.tags}</small></div>
                 <div class="button-group">
                     ${f.linkPdf.length > 10 ? `<a href="${f.linkPdf}" target="_blank" class="btn-open btn-pdf">PDF</a>` : ''}
                     ${f.linkEdit.length > 10 ? `<a href="${f.linkEdit}" target="_blank" class="btn-open btn-edit">XLS/DOC</a>` : ''}
                 </div>
             </div>`).join('');
     }
+
     init();
 </script>
 </body>
 </html>
+
