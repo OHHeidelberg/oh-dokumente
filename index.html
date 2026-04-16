@@ -6,58 +6,22 @@
     <title>OHHD Dokumentenportal</title>
     <style>
         body { font-family: sans-serif; background: #f8fafc; padding: 20px; margin: 0; box-sizing: border-box; }
-        
-        /* Haupt-Layout */
         .wrapper { display: flex; max-width: 1200px; margin: auto; gap: 20px; flex-direction: row; align-items: flex-start; }
         
-        /* GESTRECKTE A-Z Sidebar */
         .az-sidebar { 
-            width: 55px; /* Etwas breiter für "Alle" */
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between; 
-            background: white; 
-            padding: 15px 5px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 20px;
-            height: calc(100vh - 70px); 
-            z-index: 10;
-            box-sizing: border-box;
+            width: 55px; display: flex; flex-direction: column; justify-content: space-between; 
+            background: white; padding: 15px 5px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky; top: 20px; height: calc(100vh - 70px); z-index: 10; box-sizing: border-box;
         }
-        
         .az-sidebar span { 
-            text-align: center; 
-            font-size: clamp(10px, 1.4vh, 13px); 
-            font-weight: bold; 
-            cursor: pointer; 
-            color: rgb(6, 70, 2);
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-grow: 1; 
-            text-transform: uppercase;
+            text-align: center; font-size: clamp(10px, 1.4vh, 13px); font-weight: bold; cursor: pointer; 
+            color: rgb(6, 70, 2); transition: 0.2s; display: flex; align-items: center; justify-content: center; flex-grow: 1; text-transform: uppercase;
         }
-
-        /* Spezial-Style für den "Alle"-Button in der Sidebar */
         #letter-all { font-size: 10px; line-height: 1; margin-bottom: 5px; }
 
-        /* Responsive Anpassung für Mobilgeräte */
         @media (max-width: 768px) {
             .wrapper { flex-direction: column; }
-            .az-sidebar { 
-                width: 100%; 
-                height: auto;
-                flex-direction: row; 
-                justify-content: flex-start;
-                overflow-x: auto;
-                position: relative;
-                top: 0;
-                padding: 10px;
-                gap: 15px;
-            }
+            .az-sidebar { width: 100%; height: auto; flex-direction: row; justify-content: flex-start; overflow-x: auto; position: relative; top: 0; padding: 10px; gap: 15px; }
             .az-sidebar span { padding: 5px 10px; min-width: 40px; flex-grow: 0; }
         }
 
@@ -68,11 +32,7 @@
         header { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
         nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        nav a { 
-            background: rgb(6, 70, 2); 
-            color: white; padding: 8px 16px; border-radius: 6px; 
-            cursor: pointer; text-decoration: none; font-size: 14px; transition: 0.2s; 
-        }
+        nav a { background: rgb(6, 70, 2); color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; transition: 0.2s; }
         nav a:hover, nav a.active { background: rgb(56, 170, 52); font-weight: bold; }
         
         .file-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
@@ -95,17 +55,17 @@
 <body>
 
 <div class="wrapper">
-    <div class="az-sidebar" id="azSidebar">
+    <div class="az-sidebar" id="azSidebar" style="display: none;">
         <span onclick="filterByLetter('all')" class="active" id="letter-all">Alle</span>
     </div>
 
     <div class="container">
-        <header>
+        <header id="mainHeader" style="display: none;">
             <h1>OHHD Dokumentenportal</h1>
             <input type="text" id="searchInput" placeholder="Suche..." onkeyup="handleSearch()">
         </header>
-        <nav id="categoryMenu"><a id="btn-all" onclick="filterByCategory('all')" class="active">Alle</a></nav>
-        <div id="fileList">Lade Datenbank...</div>
+        <nav id="categoryMenu" style="display: none;"><a id="btn-all" onclick="filterByCategory('all')" class="active">Alle</a></nav>
+        <div id="fileList">Prüfe Zugriff...</div>
     </div>
 </div>
 
@@ -113,9 +73,44 @@
     let allFiles = [];
     let currentCategory = 'all';
     let currentLetter = 'all';
+
+    // KRYPTISCHE MAPPINGS (Hier anpassen)
+    const categoryMap = {
+        "11x": "Verwaltung",
+        "22y": "Wohnen",
+        "33z": "Arbeitssicherheit",
+        "admin99": "all" // Ein Code, um doch alles zu sehen
+    };
+
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQEfBIQh1VyQYGpdgXFleMLqwiyjl7qkH80FKNtml7m1gDeB8hoIVnMKNQr7sxonuHrQeprks3Tott6/pub?gid=0&single=true&output=csv';
 
     async function init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const idParam = urlParams.get('id');
+
+        // Prüfung: Ist die ID gültig?
+        if (!idParam || !categoryMap[idParam]) {
+            document.getElementById('fileList').innerHTML = `
+                <div class="no-results">
+                    <h2>Zugriff verweigert</h2>
+                    <p>Bitte nutzen Sie einen gültigen Abteilungs-Link oder wenden Sie sich an den Administrator.</p>
+                </div>`;
+            return;
+        }
+
+        // Falls gültig, UI einblenden und Kategorie setzen
+        currentCategory = categoryMap[idParam];
+        document.getElementById('mainHeader').style.display = 'block';
+        
+        // Wenn nicht "admin99", dann Menüs verstecken für isolierte Ansicht
+        if (idParam !== "admin99") {
+            document.getElementById('categoryMenu').style.display = 'none';
+            document.getElementById('azSidebar').style.display = 'none';
+        } else {
+            document.getElementById('categoryMenu').style.display = 'flex';
+            document.getElementById('azSidebar').style.display = 'flex';
+        }
+
         try {
             const res = await fetch(csvUrl);
             const text = await res.text();
@@ -126,10 +121,11 @@
                 return { index: c[0], name: c[1], linkPdf: c[2], linkEdit: c[3], tags: c[4], category: c[5] || 'Allgemein' };
             });
             allFiles.sort((a, b) => a.name.localeCompare(b.name));
+            
             renderAZSidebar();
             renderMenu();
-            renderTable(allFiles);
-        } catch (e) { document.getElementById('fileList').innerHTML = "Fehler beim Laden."; }
+            handleSearch();
+        } catch (e) { document.getElementById('fileList').innerHTML = "Fehler beim Laden der Datenbank."; }
     }
 
     function renderAZSidebar() {
@@ -181,8 +177,7 @@
         const listContainer = document.getElementById('fileList');
         if(list.length === 0) {
             const email = "steffen.schwab@lebenshilfe.heidelberg.de";
-            const body = encodeURIComponent(`Hallo Steffen,\nkein Ergebnis für "${document.getElementById('searchInput').value}" (Filter: ${currentLetter}).`);
-            listContainer.innerHTML = `<div class="no-results"><p>Keine Ergebnisse gefunden.</p><a href="mailto:${email}?subject=Suche&body=${body}" class="btn-support">Melden</a></div>`;
+            listContainer.innerHTML = `<div class="no-results"><p>Keine passenden Dokumente gefunden.</p><a href="mailto:${email}" class="btn-support">Support kontaktieren</a></div>`;
             return;
         }
         listContainer.innerHTML = list.map(f => `
